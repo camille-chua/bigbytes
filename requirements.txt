@@ -3,10 +3,6 @@ jupyter
 nbconvert
 ipykernel
 
-# data sets
-pydataset
-nycflights13
-
 # data manipulation
 numpy
 pandas
@@ -19,8 +15,10 @@ requests
 # data visualization
 matplotlib
 seaborn
+plotly
+streamlit
 
-# 
+# more
 selenium
 bs4
 scrapy
