@@ -14,12 +14,32 @@ st.write("Estimate the resale value of an HDB flat and gain insights into the su
 
 st.sidebar.header("Flat Details")
 
-town = st.sidebar.selectbox(
-    "Town",
-    ["Clementi", "Bishan", "Tampines", "Woodlands", "Queenstown"]
-)
-
 postal_code = st.sidebar.text_input("Postal Code", "120345")
+
+# ----------------------------
+# POSTAL CODE → TOWN MAPPING
+# ----------------------------
+
+def postal_to_town(postal_code):
+    
+    if not postal_code.isdigit() or len(postal_code) < 2:
+        return "Unknown"
+    
+    prefix = postal_code[:2]
+
+    mapping = {
+        "12": "Clementi",
+        "57": "Bishan",
+        "52": "Tampines",
+        "73": "Woodlands",
+        "14": "Queenstown"
+    }
+
+    return mapping.get(prefix, "Unknown")
+
+town = postal_to_town(postal_code)
+st.sidebar.markdown("### 📍 Town")
+st.sidebar.success(town)
 
 flat_type = st.sidebar.selectbox(
     "Flat Type",
@@ -165,9 +185,9 @@ st.write(
 st.header("📊 Price Comparison")
 
 if percent_diff > 0:
-    st.success(f"This flat is estimated **{percent_diff:.1f}% ABOVE** the median price in {town}.")
+    st.success(f"This flat is estimated **{percent_diff:.1f}% ABOVE** the median price of similar flats in {town}.")
 else:
-    st.info(f"This flat is estimated **{abs(percent_diff):.1f}% BELOW** the median price in {town}.")
+    st.info(f"This flat is estimated **{abs(percent_diff):.1f}% BELOW** the median price of similar flats in {town}.")
 
 # ----------------------------
 # PRICE PER SQM
@@ -327,3 +347,125 @@ growth_rate = (
 st.write(
     f"Median prices in **{town} increased {growth_rate:.1f}% since 2020**."
 )
+
+# ----------------------------
+# SCENARIO TESTING
+# ----------------------------
+
+st.header("🧪 Scenario Testing")
+
+st.write("Explore how changes to this unit affect its price and value.")
+
+scenario_type = st.selectbox(
+    "Choose a scenario to test",
+    [
+        "Change Distance to MRT",
+        "Increase Floor Area",
+        "Improve Location Score"
+    ]
+)
+
+
+# ----------------------------
+# SCENARIO 2: MRT DISTANCE
+# ----------------------------
+
+if scenario_type == "Change Distance to MRT":
+
+    new_mrt_dist = st.slider(
+        "New MRT Distance (m)",
+        100,
+        1500,
+        mrt_dist
+    )
+
+    # simulate price change
+    mrt_impact = (mrt_dist - new_mrt_dist) * 50
+    new_price = predicted_price + mrt_impact
+
+    st.metric("New Estimated Price", f"${new_price:,.0f}")
+
+    if mrt_impact > 0:
+        st.success(f"Closer to MRT increases price by ${mrt_impact:,.0f}")
+    else:
+        st.info(f"Living further saves ${abs(mrt_impact):,.0f}")
+
+# ----------------------------
+# SCENARIO 3: FLOOR AREA
+# ----------------------------
+
+elif scenario_type == "Increase Floor Area":
+
+    new_area = st.slider(
+        "New Floor Area (sqm)",
+        60,
+        180,
+        floor_area
+    )
+
+    area_impact = (new_area - floor_area) * 2000
+    new_price = predicted_price + area_impact
+
+    st.metric("New Estimated Price", f"${new_price:,.0f}")
+
+    if area_impact > 0:
+        st.info(f"Larger space increases price by ${area_impact:,.0f}")
+    else:
+        st.warning(f"Reducing size lowers price by ${abs(area_impact):,.0f}")
+
+# ----------------------------
+# SCENARIO 4: LOCATION SCORE
+# ----------------------------
+
+elif scenario_type == "Improve Location Score":
+
+    new_score = st.slider(
+        "New Location Score",
+        0,
+        100,
+        int(location_score)
+    )
+
+    score_impact = (new_score - location_score) * 1000
+    new_price = predicted_price + score_impact
+
+    st.metric("New Estimated Price", f"${new_price:,.0f}")
+
+    if score_impact > 0:
+        st.success(f"Better amenities increase value by ${score_impact:,.0f}")
+    else:
+        st.warning(f"Worse location reduces value by ${abs(score_impact):,.0f}")
+
+# ----------------------------
+# COMPARISON CHART
+# ----------------------------
+
+if 'new_price' in locals():
+
+    st.subheader("📊 Scenario Comparison")
+
+    comparison_df = pd.DataFrame({
+        "Scenario": ["Current", "Scenario"],
+        "Price": [predicted_price, new_price]
+    })
+
+    st.bar_chart(comparison_df.set_index("Scenario"))
+
+# ----------------------------
+# FINAL INSIGHT
+# ----------------------------
+
+if 'new_price' in locals():
+
+    st.subheader("💡 Insight")
+
+    change = new_price - predicted_price
+
+    if change > 0:
+        st.write(
+            f"This scenario increases the flat's estimated value by **${change:,.0f}**."
+        )
+    else:
+        st.write(
+            f"This scenario reduces the flat's estimated value by **${abs(change):,.0f}**."
+        )
