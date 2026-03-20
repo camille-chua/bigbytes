@@ -17,6 +17,7 @@ matplotlib
 seaborn
 plotly
 streamlit
+dash
 
 # more
 selenium
